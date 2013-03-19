@@ -19,8 +19,8 @@ libesidesh.so: MySh.o popen.o
 	cp libesidesh.so libesidesh.dll
 
 libesidesqlite.so: SQLiteMap.o
-	$(CC) $(LDFLAGS) SQLiteMap.o -lsqlite3 -o libesidesqlite.so
-	cp libesidesqlite.so libesidesqlite.dll
+        $(CC) $(LDFLAGS) SQLiteMap.o -lsqlite3 -o libesidesqlite.so
+        cp libesidesqlite.so libesidesqlite.dll
 
 Thread.o: Thread.cc Thread.h
 	$(CC) -c Thread.cc
@@ -33,9 +33,6 @@ MySh.o: MySh.cc MySh.h
 	
 popen.o: popen.cc popen.h
 	$(CC) -c popen.cc
-
-SQLiteMap.o: SQLiteMap.cc SQLiteMap.h
-	$(CC) -c SQLiteMap.cc
 	
 clean:
 	rm *.o

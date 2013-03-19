@@ -170,8 +170,7 @@ namespace PracticaCaso {
 			// Parse a little bit event parameters.
 			// Three parameters: Command, Payload [dnsName or IpPort string], and random verification-code.
 			ins >> command >> payload >> code;
-			
-		}	
+		}
 	}
 
 	void mDNSObserver::stop() {

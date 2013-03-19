@@ -11,7 +11,7 @@ namespace PracticaCaso {
 	NameServer::NameServer(int p, string m, bool leerCache): TcpListener(p) {
 		//cout << "Creating SQLiteMap " << endl;
 		// Process the contents of the mapping file
-		//this->sqliteMap = new SQLiteMap(m+"_cache.db");
+		this->sqliteMap = new SQLiteMap(m+"_cache.db");
 		//cout << "Creating SQLiteMap!!!" << endl;
 		this->leerCache = leerCache;
 		cout << "Calling to loadMappings" << endl;
@@ -23,12 +23,13 @@ namespace PracticaCaso {
 		dns2IpPortMap = ns.dns2IpPortMap;
 		server_socket = ns.server_socket;
 		port = ns.port;
-		//sqliteMap = ns.sqliteMap;
+		sqliteMap = ns.sqliteMap;
 		leerCache = ns.leerCache;
 	}
 
 	NameServer::~NameServer() {
-		//delete this->sqliteMap;
+		this->sqliteMap->close();
+		delete this->sqliteMap;
 		cout << "NameServer destructor called" << endl;
 	}
 
@@ -183,7 +184,7 @@ void ctrl_c(int)
 
 
 void usage() {
-	cout << "Usage: NameServer <port> <name-mappings-file>" << endl;
+	cout << "Usage: NameServer <port> <name-mappings-file> [false]" << endl; //para no leer el fichero de caché.
 	exit(1);
 }
 
