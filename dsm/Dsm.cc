@@ -88,6 +88,8 @@ namespace PracticaCaso {
 	DsmDriver::DsmDriver( string ipAddressNameServer, int portNameServer, string dmsServerName2Lookup ) {
 		string DSMServerIPaddress, DSMServerPortString;
 		int DSMServerPort;
+		pthread_mutex_init(&this->myMutex, NULL);
+		pthread_cond_init(&this->myCond, NULL);
 		this->observer = new DsmObserver(this);
 		this->observer->start();
 		PracticaCaso::TcpClient cliente;
@@ -118,6 +120,8 @@ namespace PracticaCaso {
 		outs << "dsm_exit " << this->nid;
 		this->send(outs.str());
 		string exitOK = this->receive();
+		pthread_mutex_destroy(&this->myMutex, NULL);
+		pthread_cond_destroy(&this->myCond, NULL);
 		this->observer->stop();
 		this->close();
 	}
@@ -210,6 +214,9 @@ namespace PracticaCaso {
 				}
 			}
 		}
+		pthread_mutex_lock(&this->myMutex);
+		pthread_cond_signal(&this->myCond);
+		pthread_mutex_unlock(&this->myMutex);
 	}
 
 	void DsmDriver::dsm_wait(string blockId) {
@@ -225,7 +232,11 @@ namespace PracticaCaso {
 			if (!blockPutEventReceived) {
 				// TODO: use binary semaphore initialized to 0 for conditional synchronisation
 				// MODIFICACIÓN PRÁCTICA DSM: Seguir instrucciones de modificación 3.3.5.3
-				sleep(1);
+				//sleep(1);
+				pthread_mutex_lock(&this->myMutex);
+				pthread_cond_wait(&this->myCond);
+				pthread_mutex_unlock(&this->myMutex);
+				
 			}
 		}
 	}

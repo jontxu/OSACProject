@@ -26,6 +26,18 @@ MatrixEvenAdder: MatrixEvenAdder.o
 MatrixOddAdder: MatrixOddAdder.o
 	$(CC) MatrixOddAdder.o $(LDFLAGS) -L. -lesidedsm -o MatrixOddAdder
 
+DmsTimeServer: DmsTimeServer.o
+	$(CC) DmsTimeServer.o $(LDFLAGS) -L. -lesidedsm -o DmsTimeServer
+	
+DmsTimeClient: DmsTimeClient.o
+	$(CC) DmsTimeClient.o $(LDFLAGS) -L. -lesidedsm -o DmsTimeClient
+
+DsmTimeServer.o: DsmTimeServer.cc DsmTimeServer.h DsmTypes.h
+	$(CC) $(INCLUDE) -c DsmTimeServer.cc
+
+DsmTimeClient.o: DsmTimeClient.cc DsmTimeClient.h DsmTypes.h
+	$(CC) $(INCLUDE) -c DsmTimeClient.cc
+
 DsmServer.o: DsmServer.cc DsmServer.h DsmTypes.h
 	$(CC) $(INCLUDE) -c DsmServer.cc
 

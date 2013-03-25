@@ -58,13 +58,9 @@ namespace PracticaCaso {
 			
 	DsmNodeId DsmServer::dsm_init(TcpClient * dmsClient) {
 		DsmNodeMetadata metadata;
-		pthread_rwlock_rdlock( &this->accessLock );
 		metadata.nid = ++nidCounter;
 		metadata.client = dmsClient;
-		pthread_rwlock_unlock( &this->accessLock );
-		pthread_rwlock_wrlock( &this->accessLock );
 		dsmNodeMap[metadata.nid] = metadata;
-		pthread_rwlock_unlock( &this->accessLock );
 		nodeCounter++;
 		return metadata.nid;
 	}

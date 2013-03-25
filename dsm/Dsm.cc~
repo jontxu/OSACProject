@@ -84,6 +84,35 @@ namespace PracticaCaso {
 
 		// Incluir el lookup en el servidor de nombres para encontrar dirección IP y puerto de dmsServerName2Lookup 
 	}
+	
+	DsmDriver::DsmDriver( string ipAddressNameServer, int portNameServer, string dmsServerName2Lookup ) {
+		string DSMServerIPaddress, DSMServerPortString;
+		int DSMServerPort;
+		pthread_mutex_init(&myMutex, NULL);
+		pthread_cond_init(&myCond, NULL);
+		this->observer = new DsmObserver(this);
+		this->observer->start();
+		PracticaCaso::TcpClient cliente;
+		cliente.connect( ipAddressNameServer, portNameServer );
+		cliente.send( dmsServerName2Lookup );
+		string ipAddressAndPort = cliente.receive();
+		if ( ipAddressAndPort.find("ERROR") == 0 ) {
+			cout << "The DMS name " << dmsServerName2Lookup << " could not be resolved." << endl;
+			this->observer->stop();
+			this->close();
+		} else {
+			ipAddressAndPort = ipAddressAndPort.replace(ipAddressAndPort.find(":", 0), 1, " ");
+			istringstream ins;
+			ins.str( ipAddressAndPort );
+			ins >> DSMServerIPaddress >> DSMServerPortString;
+			DSMServerPort = atoi( DSMServerPortString.c_str() );
+		}
+		cliente.close();
+		this->connect( DSMServerIPaddress, DSMServerPort );
+		this->send("dsm_init");
+		this->nid = atoi((this->receive()).c_str());
+	}
+
 
 
 	DsmDriver::~DsmDriver() {
@@ -91,6 +120,8 @@ namespace PracticaCaso {
 		outs << "dsm_exit " << this->nid;
 		this->send(outs.str());
 		string exitOK = this->receive();
+		pthread_mutex_destroy(&myMutex, NULL);
+		pthread_cond_destroy(&myCond, NULL);
 		this->observer->stop();
 		this->close();
 	}
@@ -183,6 +214,9 @@ namespace PracticaCaso {
 				}
 			}
 		}
+		pthread_mutex_lock(&myMutex);
+		pthread_cond_signal(&myCond);
+		pthread_mutex_unlock(&myMutex);
 	}
 
 	void DsmDriver::dsm_wait(string blockId) {
@@ -198,7 +232,11 @@ namespace PracticaCaso {
 			if (!blockPutEventReceived) {
 				// TODO: use binary semaphore initialized to 0 for conditional synchronisation
 				// MODIFICACIÓN PRÁCTICA DSM: Seguir instrucciones de modificación 3.3.5.3
-				sleep(1);
+				//sleep(1);
+				pthread_mutex_lock(&myMutex);
+				pthread_cond_wait(&myCond);
+				pthread_mutex_unlock(&myMutex);
+				
 			}
 		}
 	}
