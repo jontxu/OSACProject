@@ -21,28 +21,47 @@ namespace PracticaCaso {
 	}
 
 	void SQLiteMap::loadMappings(string mappingsDBFileName) {
-	  sqlite3_stmt *pStntm;
-	  string statement;
-	  if (sqlite3_open(mappingsDBFileName.c_str(), &dbh) == SQLITE_OK) {
-	    statement = "Select * from KeyValuePair";
-	    sqlite3_prepare(dbh, statement.c_str(), statement.size(), &pStntm, NULL);
-	    int state = sqlite3_step(pStntm);
-	    while (state != SQLITE_DONE && state == SQLITE_ROW) {
-	      const char* key = (const char*) sqlite3_column_text(pStntm, 0);
-	      const char* value = (const char*) sqlite3_column_text(pStntm, 1);
-	      dns2IpPortMap[key] = value;
-	      state = sqlite3_step(pStntm);
-	    }
-	    sqlite3_finalize(pStntm);
-	  } else {
-	    cerr << "Can't open database" << endl;
-	    sqlite3_close(dbh);
-	    exit(1);
-	  }
-	  	// Loads the mappings stored at SQLite DB into the map loadMappings
-		// In the case that the DB does not exist, create it, its structure is given by file KeyValueDB.sql
-		// If a select * from KeyValuePair executed through a sqlite3_get_table does not return SQLITE_OK, it means that the table does not exist, and needs being created
-		// If there are unexpected error exit the program with exit(1)
+		sqlite3_stmt *pStntm;
+		string statement;
+		int state;
+		
+		// If database can't be opened, exit.
+		if (sqlite3_open(mappingsDBFileName.c_str(), &dbh) != SQLITE_OK) {
+			cerr << "Can't open database" << endl;
+			sqlite3_close(dbh);
+			exit(1);  
+		}
+	  
+		//Try to take the rows from the table
+		statement = "Select * from KeyValuePair";
+		sqlite3_prepare(dbh, statement.c_str(), statement.size(), &pStntm, NULL);
+		state = sqlite3_step(pStntm);
+		if (state == SQLITE_ERROR) {
+			//If the table doesn't exists, create it.
+			statement = "create table KeyValuePair(key_element BLOB NOT NULL PRIMARY KEY,value_element BLOB)";
+			sqlite3_prepare(dbh, statement.c_str(), statement.size(), &pStntm, NULL);
+			if (sqlite3_step(pStntm) != SQLITE_OK) {
+				//If there's any error while creating the table, exit.
+				cerr << "Can't create KeyValuePair table" << endl;
+				sqlite3_close(dbh);
+				exit(1);
+			}
+		} else {
+			//If there are entries on the table, get the rows:
+			//We get one row at a time
+			//This ends when no more rows are available.
+			while (state != SQLITE_DONE && state == SQLITE_ROW) {
+				//Get the row entries: key-value
+				const char* key = (const char*) sqlite3_column_text(pStntm, 0);
+				const char* value = (const char*) sqlite3_column_text(pStntm, 1);
+				//Insert the entries into the map.
+				dns2IpPortMap[key] = value;
+				//Get the next row.
+				state = sqlite3_step(pStntm);
+			}
+		}
+		//End the statement
+		sqlite3_finalize(pStntm);
 	}
 
 	map<string, string> SQLiteMap::getMap() {
@@ -56,23 +75,23 @@ namespace PracticaCaso {
 
 	void SQLiteMap::set(string mapKey, string mapValue) {
 	  //char ** result, * errorMsg;
-	  sqlite3_stmt *stmt;
-	  string sql;
-	  if(dns2IpPortMap.find(mapKey) != dns2IpPortMap.end()){
-	    dns2IpPortMap.erase(mapKey);
-	    dns2IpPortMap[mapKey] = mapValue;
-	    sql = "Update KeyValuePair set value_element " + mapValue + " where key_element = " + mapKey;
-	  }else{
-	    dns2IpPortMap[mapKey] = mapValue;
-	    sql = "Insert into KeyValuePair values ('" + mapKey + "','" + mapValue + "')";
-	  }
-	  sqlite3_prepare(dbh, sql.c_str(), sql.size(), &stmt, NULL);
-	  if (sqlite3_step(stmt) != SQLITE_OK) {
-	  	cerr << "Can't insert or update database";
-	    	sqlite3_close(dbh);
-	    	exit(1);
-	  }
-	  sqlite3_finalize(stmt);
+		sqlite3_stmt *stmt;
+		string sql;
+		if (dns2IpPortMap.find(mapKey) != dns2IpPortMap.end()) {
+			dns2IpPortMap.erase(mapKey);
+			dns2IpPortMap[mapKey] = mapValue;
+			sql = "Update KeyValuePair set value_element " + mapValue + " where key_element = " + mapKey;
+		} else {
+			dns2IpPortMap[mapKey] = mapValue;
+			sql = "Insert into KeyValuePair values ('" + mapKey + "','" + mapValue + "')";
+		}
+		sqlite3_prepare(dbh, sql.c_str(), sql.size(), &stmt, NULL);
+		if (sqlite3_step(stmt) != SQLITE_OK) {
+			cerr << "Can't insert or update database";
+			sqlite3_close(dbh);
+			exit(1);
+		}
+		sqlite3_finalize(stmt);
 		// Undertake the update of the STL map and the database. Bear in mind that it there is not an entry with a passed key an INSERT will have to be executed, if there was already such an entry an UPDATE will take place
 	}
 

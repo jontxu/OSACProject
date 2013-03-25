@@ -4,4 +4,4 @@ create table KeyValuePair
   value_element    BLOB
 );
 
--- insert into KeyValuePair(key_element, value_element) values ('deusto.es',  '127.0.0.1:3000');
+insert into KeyValuePair(key_element, value_element) values ('deusto.es',  '127.0.0.1:3000');

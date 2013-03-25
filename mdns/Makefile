@@ -1,6 +1,6 @@
 # Makefile
 # author: pgarcia@eside.deusto.es
-CC=g++
+CC=g++ -fPIC
 LDFLAGS=-L../util -lm -lpthread -lesidesocket -lesidethread -lesidesqlite
 INCLUDE=-I../util
 

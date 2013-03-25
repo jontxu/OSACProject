@@ -11,7 +11,7 @@ namespace PracticaCaso {
 	NameServer::NameServer(int p, string m, bool leerCache): TcpListener(p) {
 		//cout << "Creating SQLiteMap " << endl;
 		// Process the contents of the mapping file
-		this->sqliteMap = new SQLiteMap(m+"_cache.db");
+		if(leerCache) this->sqliteMap = new SQLiteMap(m+"_cache.db");
 		//cout << "Creating SQLiteMap!!!" << endl;
 		this->leerCache = leerCache;
 		cout << "Calling to loadMappings" << endl;
@@ -28,8 +28,7 @@ namespace PracticaCaso {
 	}
 
 	NameServer::~NameServer() {
-		this->sqliteMap->close();
-		delete this->sqliteMap;
+		if(leerCache) delete this->sqliteMap;
 		cout << "NameServer destructor called" << endl;
 	}
 
@@ -72,8 +71,17 @@ namespace PracticaCaso {
 			}
 		}
 		in.close();
-
-		// TODO: If there is a .DB file with previously learned mappings load them into dns2IpPortMap
+		if(leerCache){
+		  map<string, string> temp = this->sqliteMap->getMap();
+		  map<string, string>::iterator p;
+		  p = temp.begin();
+		  cout << "Loading DB Files..." << endl;
+		  while (p != temp.end()) {
+		    cout << p->first << " " << p->second << endl;
+		    this->dns2IpPortMap[p->first] = p->second;
+		    p++;
+		  }
+		}
 	}
 
 	string NameServer::delegateExternalDnsServer(string serverDetails, string dnsName) {
@@ -116,8 +124,10 @@ namespace PracticaCaso {
 						npos =  (dnsName).rfind(p->first);
 						if (npos>0 && (npos<dnsName.length())) {
 							cout << "Child Name server to process request: " << p->first << endl;
-							string ipPortTemp = delegateExternalDnsServer(p->second, dnsName);
+							string ipPortTemp = delegateExternalDnsServer(p->second, dnsName);							
 							// TODO: cache the already resolved names in other DNS servers both in memory and sqlite3
+							this->dns2IpPortMap[dnsName] = ipPortTemp;
+							this->sqliteMap->set(dnsName,ipPortTemp);
 							return ipPortTemp;
 						}
 					}
@@ -130,8 +140,10 @@ namespace PracticaCaso {
 					segment = segment.substr(npos+1);
 					if (this->dns2IpPortMap.find(segment) != this->dns2IpPortMap.end()) {
 						cout << "Parent Name server to process request: " << segment << ": " << this->dns2IpPortMap[segment] << endl;
-						string ipPortTemp = delegateExternalDnsServer(this->dns2IpPortMap[segment], dnsName);
+						string ipPortTemp = delegateExternalDnsServer(this->dns2IpPortMap[segment], dnsName);						
 						// TODO: cache the already resolved names in other DNS servers both in memory and sqlite3
+						this->dns2IpPortMap[dnsName] = ipPortTemp;
+						this->sqliteMap->set(dnsName,ipPortTemp);
 						return ipPortTemp;
 					} else {
 						npos = segment.find(".");
@@ -184,7 +196,7 @@ void ctrl_c(int)
 
 
 void usage() {
-	cout << "Usage: NameServer <port> <name-mappings-file> [false]" << endl; //para no leer el fichero de caché.
+	cout << "Usage: NameServer <port> <name-mappings-file> <db-usage>" << endl; //para no leer el fichero de caché.
 	exit(1);
 }
 
@@ -202,11 +214,13 @@ void processClientRequest(PracticaCaso::TcpClient *dnsClient, PracticaCaso::Name
 int main(int argc, char** argv) {
 	signal(SIGINT,ctrl_c);
 
-	if (argc != 3) {
+	if (argc != 4) {
 		usage();
 	}
-
-	PracticaCaso::NameServer nameServer(atoi(argv[1]), (string)argv[2], false);
+	bool dbusage;
+	if (strcmp(argv[3],"true")) dbusage = false;
+	else dbusage = true;
+	PracticaCaso::NameServer nameServer(atoi(argv[1]), (string)argv[2], dbusage);
 	cout << "NameServer instance: " << endl << nameServer << endl;
 	// MODIFICATION 2.3.6
 	nameServer_pointer = &nameServer;

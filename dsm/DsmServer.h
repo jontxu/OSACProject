@@ -34,20 +34,20 @@ namespace PracticaCaso
 			int nidCounter;
 			int nodeCounter;
 			map<DsmNodeId, DsmNodeMetadata> dsmNodeMap;
-			map<string, DsmBlock> blockMetadataMap; 
-			// TODO: declare variable of type pthread_rwlock_t 
+			map<string, DsmBlock> blockMetadataMap;
+			// TODO: declare variable of type pthread_rwlock_t
 
 			void dsm_notify(string message);
 		public:
 			DsmServer(int port);
 			~DsmServer();
-			
+
 			DsmNodeId dsm_init(TcpClient *);
 			void dsm_exit(DsmNodeId);
-			
+
 			void * dsm_malloc(DsmNodeId nid, string blockId, int size);
 			bool dsm_put(DsmNodeId nid, string blockId, void * content, int size);
-			
+
 			void dsm_notify_put(DsmNodeId nid, string blockId);
 			void dsm_notify_free(DsmNodeId nid, string blockId);
 

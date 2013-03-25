@@ -30,9 +30,9 @@ namespace PracticaCaso
 		string blockId;
 		DsmNodeId creatorNode;
 		DsmNodeId lastAccessNode;
-		int blockSize;
+		int blockSize; //tamaño del bloque
 		void *addr;
-		int size;
+		int size; //tamaño de los datos
 	};
 
 	struct DsmNodeMetadata {

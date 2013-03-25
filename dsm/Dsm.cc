@@ -84,6 +84,33 @@ namespace PracticaCaso {
 
 		// Incluir el lookup en el servidor de nombres para encontrar dirección IP y puerto de dmsServerName2Lookup 
 	}
+	
+	DsmDriver::DsmDriver( string ipAddressNameServer, int portNameServer, string dmsServerName2Lookup ) {
+		string DSMServerIPaddress, DSMServerPortString;
+		int DSMServerPort;
+		this->observer = new DsmObserver(this);
+		this->observer->start();
+		PracticaCaso::TcpClient cliente;
+		cliente.connect( ipAddressNameServer, portNameServer );
+		cliente.send( dmsServerName2Lookup );
+		string ipAddressAndPort = cliente.receive();
+		if ( ipAddressAndPort.find("ERROR") == 0 ) {
+			cout << "The DMS name " << dmsServerName2Lookup << " could not be resolved." << endl;
+			this->observer->stop();
+			this->close();
+		} else {
+			ipAddressAndPort = ipAddressAndPort.replace(ipAddressAndPort.find(":", 0), 1, " ");
+			istringstream ins;
+			ins.str( ipAddressAndPort );
+			ins >> DSMServerIPaddress >> DSMServerPortString;
+			DSMServerPort = atoi( DSMServerPortString.c_str() );
+		}
+		cliente.close();
+		this->connect( DSMServerIPaddress, DSMServerPort );
+		this->send("dsm_init");
+		this->nid = atoi((this->receive()).c_str());
+	}
+
 
 
 	DsmDriver::~DsmDriver() {

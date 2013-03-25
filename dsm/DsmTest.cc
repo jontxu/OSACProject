@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
 
 	// Hacer lookup dsm.deusto.es 
 
-	PracticaCaso::DsmDriver * driver = new PracticaCaso::DsmDriver("127.0.0.1", atoi(argv[1]));
+	PracticaCaso::DsmDriver * driver = new PracticaCaso::DsmDriver( argv[1], atoi(argv[2]), argv[3] );
 	for (int i=0; i<10;i++) {
 		string blockId = "BlockA";
 
