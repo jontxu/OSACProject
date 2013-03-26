@@ -4,6 +4,7 @@
 # own level
 deusto.es
 # servidores registrados
+dsm.deusto.es 127.0.0.1:5555
 pop.deusto.es 130.206.100.17:25
 mail.deusto.es 130.206.100.17:110
 jeison.deusto.es 130.206.100.134:80

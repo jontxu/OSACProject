@@ -1,6 +1,6 @@
 # Makefile
 # author: dipina@eside.deusto.es
-CC=g++
+CC=g++ -fPIC
 LDFLAGS=-L../util -lm -lpthread -lesidesocket -lesidethread
 INCLUDE=-I../util
 
@@ -18,19 +18,19 @@ DsmServer: DsmServer.o
 	$(CC)  DsmServer.o $(LDFLAGS) -o DsmServer
 
 DsmTest: DsmTest.o
-	$(CC) DsmTest.o $(LDFLAGS) -L. -lesidedsm -o DsmTest
+	$(CC) DsmTest.o -L. -lesidedsm $(LDFLAGS) -o DsmTest
 	
 MatrixEvenAdder: MatrixEvenAdder.o
-	$(CC) MatrixEvenAdder.o $(LDFLAGS) -L. -lesidedsm -o MatrixEvenAdder
+	$(CC) MatrixEvenAdder.o -L. -lesidedsm $(LDFLAGS) -o MatrixEvenAdder
 	
 MatrixOddAdder: MatrixOddAdder.o
-	$(CC) MatrixOddAdder.o $(LDFLAGS) -L. -lesidedsm -o MatrixOddAdder
+	$(CC) MatrixOddAdder.o -L. -lesidedsm $(LDFLAGS) -o MatrixOddAdder
 
 DmsTimeServer: DmsTimeServer.o
-	$(CC) DmsTimeServer.o $(LDFLAGS) -L. -lesidedsm -o DmsTimeServer
+	$(CC) DmsTimeServer.o -L. -lesidedsm $(LDFLAGS) -o DmsTimeServer
 	
 DmsTimeClient: DmsTimeClient.o
-	$(CC) DmsTimeClient.o $(LDFLAGS) -L. -lesidedsm -o DmsTimeClient
+	$(CC) DmsTimeClient.o -L. -lesidedsm $(LDFLAGS) -o DmsTimeClient
 
 DsmTimeServer.o: DsmTimeServer.cc DsmTimeServer.h DsmTypes.h
 	$(CC) $(INCLUDE) -c DsmTimeServer.cc

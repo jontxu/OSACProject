@@ -51,9 +51,10 @@ namespace PracticaCaso
 			vector<DsmEvent> putEvents;
 			// TODO: Declare here conditional variable  sync_cond thatcontrols the synchronisation between the Observer and the DsmDriver threads
 			pthread_mutex_t myMutex;
-			ptread_cond_t myCond;
+			pthread_cond_t myCond;
 		public:
 			DsmDriver(string DSMServerIPaddress, int DSMServerPort);
+			DsmDriver( string ipAddressNameServer, int portNameServer, string dmsServerName2Lookup );
 			~DsmDriver();
 
 			// Allows a DSM node to retrieve its ID

@@ -43,51 +43,65 @@ inline string str(unsigned long num) {
 	return string(buffer);
 }
 
-namespace PracticaCaso {
-	DsmServer::DsmServer(int p): nidCounter(-1), nodeCounter(0), TcpListener(p) {
-		// TODO: create lock
-		pthread_rwlock_init(&this->accessLock, NULL);
+	namespace PracticaCaso {
+	  DsmServer::DsmServer(int p): nidCounter(-1), nodeCounter(0), TcpListener(p) {
+		// TODO: create lock 
+	  pthread_rwlock_init( &accessLock, NULL );
 	}
 
 
 	DsmServer::~DsmServer() {
 		this->stop();
 		// TODO: destory lock
-		pthread_rwlock_destroy(&this->accessLock);
+		pthread_rwlock_destroy( &accessLock );
 	}
 			
 	DsmNodeId DsmServer::dsm_init(TcpClient * dmsClient) {
 		DsmNodeMetadata metadata;
-		pthread_rwlock_rdlock( &this->accessLock );
+		pthread_rwlock_rdlock(&accessLock);
 		metadata.nid = ++nidCounter;
+		pthread_rwlock_unlock(&accessLock);
 		metadata.client = dmsClient;
-		pthread_rwlock_unlock( &this->accessLock );
-		pthread_rwlock_wrlock( &this->accessLock );
+		pthread_rwlock_wrlock(&accessLock);
 		dsmNodeMap[metadata.nid] = metadata;
-		pthread_rwlock_unlock( &this->accessLock );
 		nodeCounter++;
+		pthread_rwlock_unlock(&accessLock);
+	
 		return metadata.nid;
 	}
 
 	void DsmServer::dsm_exit(DsmNodeId nodeId) {
 		// Remove all the data structures created by this node
+		pthread_rwlock_rdlock(&accessLock);
 		if (dsmNodeMap.find(nodeId) != dsmNodeMap.end()) {
+			pthread_rwlock_unlock(&accessLock);
+			pthread_rwlock_wrlock(&accessLock);
 			--nodeCounter;
+			pthread_rwlock_unlock(&accessLock);
+			pthread_rwlock_rdlock(&accessLock);
 			if (nodeCounter == 0) {
 				for (int i=0; i<dsmNodeMap[nodeId].dsmBlocksRequested.size(); i++) {
+					pthread_rwlock_unlock(&accessLock);
+					pthread_rwlock_wrlock(&accessLock);
 					(this->blockMetadataMap).erase(dsmNodeMap[nodeId].dsmBlocksRequested[i].blockId);
 					free(dsmNodeMap[nodeId].dsmBlocksRequested[i].addr);
+					pthread_rwlock_unlock(&accessLock);
+					pthread_rwlock_rdlock(&accessLock);
 				}
-				
-			}
+				pthread_rwlock_unlock(&accessLock);
+			} else pthread_rwlock_unlock(&accessLock);
+			pthread_rwlock_wrlock(&accessLock);
 			dsmNodeMap.erase(nodeId);
+			pthread_rwlock_unlock(&accessLock);
 		}
 	}
 	
 
 	void * DsmServer::dsm_malloc(DsmNodeId nid, string blockId, int size) {
+		pthread_rwlock_rdlock(&this->accessLock);
 		if (this->dsmNodeMap.find(nid) != this->dsmNodeMap.end()) {
 			if (this->blockMetadataMap.find(blockId) == this->blockMetadataMap.end()) {
+				pthread_rwlock_unlock(&this->accessLock);
 				DsmBlock block;
 				block.addr = malloc(size);
 				if (block.addr != NULL) {
@@ -95,11 +109,16 @@ namespace PracticaCaso {
 					block.size = 0;
 					block.creatorNode = nid;
 					block.lastAccessNode = nid;
+					pthread_rwlock_wrlock( &this->accessLock );
 					this->blockMetadataMap[blockId] = block;
-
+					pthread_rwlock_unlock( &this->accessLock);
+					pthread_rwlock_rdlock(&this->accessLock);
 					DsmNodeMetadata metadata = this->dsmNodeMap[nid];
+					pthread_rwlock_unlock(&this->accessLock);
 					metadata.dsmBlocksRequested.push_back(block);
-					this->dsmNodeMap[nid] = metadata;				
+					pthread_rwlock_wrlock(&this->accessLock);
+					this->dsmNodeMap[nid] = metadata;
+					pthread_rwlock_unlock(&this->accessLock);
 					return block.addr;
 				} else {
 					cerr << "ERROR: DMS Server ran out of memory!!!" << endl;
@@ -108,7 +127,9 @@ namespace PracticaCaso {
 			} else {
 				cerr << "WARNING: attempt to create block " << blockId << " already existing by " << nid << "!!!" << endl;
 				DsmBlock tempBlock = this->blockMetadataMap[blockId];
+				pthread_rwlock_unlock(&this->accessLock);
 				if (tempBlock.size < size) {
+				
 					cerr << "ERROR: impossible to reuse block " << blockId << " of size " << tempBlock.size << " < " << size << endl;
 					return 0;
 				} else {
@@ -116,6 +137,7 @@ namespace PracticaCaso {
 				}
 			}
 		} else {
+			pthread_rwlock_unlock(&this->accessLock);
 			cerr << "ERROR: attempt to create block " << blockId << " by non-registered node " << nid << "!!!" << endl;
 			return 0;
 		}
@@ -123,22 +145,27 @@ namespace PracticaCaso {
 
 
 	bool DsmServer::dsm_put(DsmNodeId nid, string blockId, void * content, int size) {
+		pthread_rwlock_rdlock(&accessLock);//read=1
 		if (this->blockMetadataMap.find(blockId) != this->blockMetadataMap.end()) {
 			bool dsmPutResult = false;
 			DsmBlock blockMetadata = this->blockMetadataMap[blockId];
+			pthread_rwlock_unlock(&accessLock);//read=0
 			// We allow anybody to write over the blocks
 			if ( size <= blockMetadata.blockSize ) {
 				bzero(blockMetadata.addr, blockMetadata.blockSize);
 				memcpy(blockMetadata.addr, content, size);
 				blockMetadata.size = size;
 				blockMetadata.lastAccessNode = nid;
+				pthread_rwlock_wrlock(&accessLock);//write=1
 				this->blockMetadataMap[blockId] = blockMetadata;
+				pthread_rwlock_unlock(&accessLock);//write=0
 				dsmPutResult = true;
 			} else {
 				cerr << "ERROR: The node " << nid << " does not have write access!!!" << endl;
 			}
 			return dsmPutResult;
 		} else {
+			pthread_rwlock_unlock(&accessLock);//read=0
 			cerr << "ERROR: blockId " + blockId + " does not exist" << endl;
 			return false;
 		}
@@ -164,10 +191,13 @@ namespace PracticaCaso {
 	}
 
 	DsmBlock DsmServer::dsm_get(DsmNodeId nid, string blockId) {
+		pthread_rwlock_rdlock(&accessLock);
 		if (this->blockMetadataMap.find(blockId) != this->blockMetadataMap.end()) {
 			DsmBlock temp = this->blockMetadataMap[blockId];
+			pthread_rwlock_unlock(&accessLock);
 			return temp;
 		} else {
+			pthread_rwlock_unlock(&accessLock);
 			DsmBlock block;
 			block.blockId = "ERROR";
 			return block;
@@ -176,21 +206,29 @@ namespace PracticaCaso {
 
 
 	bool DsmServer::dsm_free(DsmNodeId nid, string blockId) {
+		pthread_rwlock_rdlock(&accessLock);
 		if (this->dsmNodeMap.find(nid) != this->dsmNodeMap.end()) {
 			DsmNodeMetadata nodeMetadata = this->dsmNodeMap[nid];
 			if (this->blockMetadataMap.find(blockId) != this->blockMetadataMap.end()) {
 				DsmBlock blockMetadata = this->blockMetadataMap[blockId];
+				pthread_rwlock_unlock(&accessLock);
 				// Only the last dsm client node who put some data can then release it
 				if (blockMetadata.lastAccessNode == nid) {
+					pthread_rwlock_wrlock(&accessLock);
 					(this->blockMetadataMap).erase(blockId);
+					pthread_rwlock_unlock(&accessLock);
+					pthread_rwlock_rdlock(&accessLock);
 					vector<DsmBlock> blocksRequested = (this->dsmNodeMap[nid]).dsmBlocksRequested;
+					pthread_rwlock_unlock(&accessLock);
 					for (vector<DsmBlock>::iterator it = blocksRequested.begin(); it!=blocksRequested.end(); ++it) {
 						if ( (blockMetadata.lastAccessNode == it->lastAccessNode) && 
 							 (blockMetadata.blockSize == it->blockSize) && 
 							 (blockMetadata.addr == it->addr)
 							) {
 							blocksRequested.erase(it, ++it);
+							pthread_rwlock_wrlock(&accessLock);
 							(this->dsmNodeMap[nid]).dsmBlocksRequested = blocksRequested;
+							pthread_rwlock_unlock(&accessLock);
 							return true;
 						}
 					}
@@ -198,8 +236,9 @@ namespace PracticaCaso {
 				} else {
 					return false;
 				}
-			}
+			} else pthread_rwlock_unlock(&accessLock);
 		} else {
+			pthread_rwlock_unlock(&accessLock);
 			return false;
 		}
 	}

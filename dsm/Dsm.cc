@@ -120,8 +120,8 @@ namespace PracticaCaso {
 		outs << "dsm_exit " << this->nid;
 		this->send(outs.str());
 		string exitOK = this->receive();
-		pthread_mutex_destroy(&this->myMutex, NULL);
-		pthread_cond_destroy(&this->myCond, NULL);
+		pthread_mutex_destroy(&this->myMutex);
+		pthread_cond_destroy(&this->myCond);
 		this->observer->stop();
 		this->close();
 	}
@@ -234,7 +234,7 @@ namespace PracticaCaso {
 				// MODIFICACIÓN PRÁCTICA DSM: Seguir instrucciones de modificación 3.3.5.3
 				//sleep(1);
 				pthread_mutex_lock(&this->myMutex);
-				pthread_cond_wait(&this->myCond);
+				pthread_cond_wait(&this->myCond, &this->myMutex);
 				pthread_mutex_unlock(&this->myMutex);
 				
 			}
