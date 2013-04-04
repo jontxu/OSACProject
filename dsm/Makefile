@@ -4,7 +4,7 @@ CC=g++ -fPIC
 LDFLAGS=-L../util -lm -lpthread -lesidesocket -lesidethread
 INCLUDE=-I../util
 
-main: libesidedsm.so DsmServer DsmTest MatrixEvenAdder MatrixOddAdder 
+main: libesidedsm.so DsmServer DsmTest MatrixEvenAdder MatrixOddAdder HangmanClient HangmanServer
 
 libesidedsm.so: Dsm.o
 	$(CC) -shared $(LDFLAGS) Dsm.o -o libesidedsm.so
@@ -25,6 +25,12 @@ MatrixEvenAdder: MatrixEvenAdder.o
 	
 MatrixOddAdder: MatrixOddAdder.o
 	$(CC) MatrixOddAdder.o -L. -lesidedsm $(LDFLAGS) -o MatrixOddAdder
+
+HangmanClient: HangmanClient.o
+	$(CC) HangmanClient.o -L. -lesidedsm $(LDFLAGS) -o HangmanClient
+	
+HangmanServer: HangmanServer.o
+	$(CC) HangmanServer.o -L. -lesidedsm $(LDFLAGS) -o HangmanServer
 
 DmsTimeServer: DmsTimeServer.o
 	$(CC) DmsTimeServer.o -L. -lesidedsm $(LDFLAGS) -o DmsTimeServer
@@ -50,8 +56,14 @@ MatrixEvenAdder.o: MatrixEvenAdder.cc
 MatrixOddAdder.o: MatrixOddAdder.cc
 	$(CC) $(INCLUDE) -c MatrixOddAdder.cc
 
+HangmanClient.o: HangmanClient.cc
+	$(CC) $(INCLUDE) -c HangmanClient.cc
+	
+HangmanServer.o: HangmanServer.cc
+	$(CC) $(INCLUDE) -c HangmanServer.cc
+
 clean:
 	rm *.o
 	rm *.so
 	rm *.dll
-	rm DsmServer DsmTest MatrixEvenAdder MatrixOddAdder 
+	rm DsmServer DsmTest MatrixEvenAdder MatrixOddAdder HangmanClient HangmanServer
