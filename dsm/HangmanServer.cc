@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
 	// Hacer lookup dsm.deusto.es 
 	PracticaCaso::DsmDriver * driver = new PracticaCaso::DsmDriver( argv[1], atoi(argv[2]), argv[3] );
 	PracticaCaso::DsmData data;
-	cout << "Saving " + argv[2] + "in memory: " << driver->get_nid() << endl;
-	const char* solution = argv[2].c_str(); //string to guess
+	const char* solution = argv[2]; //string to guess
+	cout << "Saving " << solution << "in memory: " << driver->get_nid() << endl;
 
 	try {
 		driver->dsm_malloc("Solution", sizeof(solution));
@@ -34,16 +34,16 @@ int main(int argc, char** argv) {
 		}
 	} catch (DsmException dsme) {
 		// There may be several processes doing a dsm_malloc, only the first one will succeed 
-		cerr << "ERROR in dsm_malloc(\"Solution\", sizeof(" << sizeof(a) << ")): " << dsme << endl;
+		cerr << "ERROR in dsm_malloc(\"Solution\", sizeof(" << sizeof(solution) << ")): " << dsme << endl;
 		exit(1);
 	}
 
 	//Inserts the guess string
-	char* guess[solution.length];
+	char* guess[strlen(solution)];
 	try {
 		driver->dsm_malloc("Guess", sizeof(guess));
 		//Unknown string
-		for (int i = 0; i++, i < solution.length)
+		for (int i = 0; i < strlen(solution); i++)
 			guess[i] = "_";
 		try {
 			driver->dsm_put("Guess", (void *)guess, sizeof(guess)); 
@@ -58,12 +58,29 @@ int main(int argc, char** argv) {
 		exit(1);
 	}
 
+	//Player 1 starts
+	int turn = 1;
+	try {
+		driver->dsm_malloc("Turn", sizeof(turn));
+		try {
+			driver->dsm_put("Turn", (void *)&turn, sizeof(turn)); 
+		} catch (DsmException dsme) {
+			cerr << "ERROR: dsm_put(\"Turn\", &turn, " << sizeof(turn) << ")): " << dsme << endl;
+			driver->dsm_free("Turn");
+			exit(1);
+		}
+	} catch (DsmException dsme) {
+		// There may be several processes doing a dsm_malloc, only the first one will succeed 
+		cerr << "ERROR in dsm_malloc(\"Turn\", sizeof(" << sizeof(turn) << ")): " << dsme << endl;
+		exit(1);
+	}
+
 	//Game: Server finishes if the solution has been found
 	bool found = false;
 	while (!found) {
 		try {
 			data = driver->dsm_get("Guess");
-			char* usersolution = *((char *)data.addr);
+			char* usersolution = *((char **)data.addr);
 			if (strcmp(usersolution, solution) == 0)
 				found = true;
 		} catch (DsmException dsme) {

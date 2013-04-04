@@ -4,7 +4,7 @@ CC=g++ -fPIC
 LDFLAGS=-L../util -lm -lpthread -lesidesocket -lesidethread
 INCLUDE=-I../util
 
-main: libesidedsm.so DsmServer DsmTest MatrixEvenAdder MatrixOddAdder HangmanClient HangmanServer
+main: libesidedsm.so DsmServer DsmTest MatrixEvenAdder MatrixOddAdder HangmanClient HangmanServer DsmTimeServer DsmTimeClient
 
 libesidedsm.so: Dsm.o
 	$(CC) -shared $(LDFLAGS) Dsm.o -o libesidedsm.so
@@ -32,17 +32,11 @@ HangmanClient: HangmanClient.o
 HangmanServer: HangmanServer.o
 	$(CC) HangmanServer.o -L. -lesidedsm $(LDFLAGS) -o HangmanServer
 
-DmsTimeServer: DmsTimeServer.o
-	$(CC) DmsTimeServer.o -L. -lesidedsm $(LDFLAGS) -o DmsTimeServer
+DsmTimeServer: DsmTimeServer.o
+	$(CC) DsmTimeServer.o -L. -lesidedsm $(LDFLAGS) -o DsmTimeServer
 	
-DmsTimeClient: DmsTimeClient.o
-	$(CC) DmsTimeClient.o -L. -lesidedsm $(LDFLAGS) -o DmsTimeClient
-
-DsmTimeServer.o: DsmTimeServer.cc DsmTimeServer.h DsmTypes.h
-	$(CC) $(INCLUDE) -c DsmTimeServer.cc
-
-DsmTimeClient.o: DsmTimeClient.cc DsmTimeClient.h DsmTypes.h
-	$(CC) $(INCLUDE) -c DsmTimeClient.cc
+DsmTimeClient: DsmTimeClient.o
+	$(CC) DsmTimeClient.o -L. -lesidedsm $(LDFLAGS) -o DsmTimeClient
 
 DsmServer.o: DsmServer.cc DsmServer.h DsmTypes.h
 	$(CC) $(INCLUDE) -c DsmServer.cc
@@ -52,7 +46,7 @@ DsmTest.o: DsmTest.cc
 
 MatrixEvenAdder.o: MatrixEvenAdder.cc
 	$(CC) $(INCLUDE) -c MatrixEvenAdder.cc
-	
+
 MatrixOddAdder.o: MatrixOddAdder.cc
 	$(CC) $(INCLUDE) -c MatrixOddAdder.cc
 
@@ -62,8 +56,14 @@ HangmanClient.o: HangmanClient.cc
 HangmanServer.o: HangmanServer.cc
 	$(CC) $(INCLUDE) -c HangmanServer.cc
 
+DsmTimeServer.o: DsmTimeServer.cc
+	$(CC) $(INCLUDE) -c DsmTimeServer.cc
+
+DsmTimeClient.o: DsmTimeClient.cc
+	$(CC) $(INCLUDE) -c DsmTimeClient.cc
+
 clean:
 	rm *.o
 	rm *.so
 	rm *.dll
-	rm DsmServer DsmTest MatrixEvenAdder MatrixOddAdder HangmanClient HangmanServer
+	rm DsmServer DsmTest MatrixEvenAdder MatrixOddAdder HangmanClient HangmanServer DsmTimeClient DsmTimeServer 

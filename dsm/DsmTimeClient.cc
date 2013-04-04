@@ -1,12 +1,12 @@
 // MatrixEvenAdder.cc
 // author: dipina@eside.deusto.es
 
-#include "TcpListener.h"
-#include "Dsm.h"
-
 extern "C" {
 	#include <sys/time.h>
 }
+
+#include "TcpListener.h"
+#include "Dsm.h"
 
 #define BUFFER_SIZE 1024
 
@@ -16,17 +16,14 @@ void usage() {
 }
 
 //Ends the program (it's ra n indefinitely)
-void finalize(bool run) {
-	run = false;
+void finalize(int a) {
 	cout << "Sleeping for a second before finishing ..." << endl;
 	sleep(1);
-	delete driver;
 	exit(1);
 }
 
-
 int main(int argc, char** argv) {
-	bool run = true;
+
 	if (argc != 4) {
 		usage();
 	}
@@ -36,32 +33,30 @@ int main(int argc, char** argv) {
 	PracticaCaso::DsmData data;
 	cout << "Getting time from server: " << driver->get_nid() << endl;
 
-	struct timeval first, second; //or global_timestamp
+	struct timeval first, second;
+	time_t curtime; //or global_timestamp
 	struct timezone tzp;
 	char buffer[100];
+	bool run = true;
 
-	gettimeofday (&first, &tzp);
-	signal(SIGINT, finalize(run));
+	gettimeofday(&first, &tzp);
+	signal(SIGINT, finalize);
 	// Get the global timestamp variable every second
-	do {
+	while(1) {
 		try {
-			first.tv_sec = second.tv_sec;
-			first.tv_usec = second.tv_usec;
 			data = driver->dsm_get("GLOBAL_TIMESTAMP");
-			timestamp = *(timeval)data.addr);
-			strftime(buffer,100,"%d-%m-%Y, %H:%M:%S",localtime(&curtime.t_vsec));
+			curtime = *((time_t*)data.addr);
+			strftime(buffer,100,"%d-%m-%Y, %H:%M:%S",localtime(&curtime));
 			cout << "new system time set " << buffer << endl;
-			gettimeofday(&second, &tzp);
 		} catch (DsmException dsme) {
 			cerr << "ERROR: dsm_get(\"GLOBAL_TIMESTAMP\") - Waiting for other process to initialise it: " << dsme << endl;
 			driver->dsm_wait("GLOBAL_TIMESTAMP");
 		}
-	} while ((second.tv_sec - first.tv_sec) == 1 && run);
-	
-	/*
-	timestamp = *(timeval)data.addr);
-	cout << "***Current time: " << timestamp << "***" << endl;
-	delete driver;
-	*/
+		do {
+			gettimeofday(&second, &tzp);
+		} while (second.tv_usec - first.tv_usec != 1000000)
+		first.tv_sec = second.tv_sec;
+		first.tv_usec = second.tv_usec;
+	}
 }
 

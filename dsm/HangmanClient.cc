@@ -25,26 +25,10 @@ int main(int argc, char** argv) {
 	//Variables for the game: attempts, failed characters list, introduced character or string (solution).
 	int attempts = 10;
 	int current = 0;
-	char* failedchars = {};
+	char failedchars[] = {};
 	string input;
 	int turn;
-
-	try {
-		driver->dsm_malloc("Turn", sizeof(turn));
-		//Save player number in shared memory for turn management
-		turn = (int)argv[3];
-		try {
-			driver->dsm_put("Turn", (void *)turn, sizeof(turn)); 
-		} catch (DsmException dsme) {
-			cerr << "ERROR: dsm_put(\"Turn\", turn, " << sizeof(turn) << ")): " << dsme << endl;
-			driver->dsm_free("Turn");
-			exit(1);
-		}
-	} catch (DsmException dsme) {
-		// There may be several processes doing a dsm_malloc, only the first one will succeed 
-		cerr << "ERROR in dsm_malloc(\"Turn\", sizeof(" << sizeof(turn) << ")): " << dsme << endl;
-		exit(1);
-	}
+	char* solution;
 
 	//Get solution
 	bool solutionGet = false;
@@ -57,7 +41,7 @@ int main(int argc, char** argv) {
 			driver->dsm_wait("Solution");
 		}
 	}
-	char* solution = *((char *)data.addr);
+	solution = *((char**)data.addr);
 	
 	//Actual game
 	while (attempts != 0) {
@@ -71,7 +55,8 @@ int main(int argc, char** argv) {
 				cerr << "ERROR: dsm_get(\"Solution\") - Waiting for other process to initialise it: " << dsme << endl;
 				driver->dsm_wait("Solution");
 			}
-			if (turn == *((int)data.addr))
+			int currentturn = *((int*)data.addr);
+			if (turn == currentturn)
 				myTurn = true;
 		}
 
@@ -86,7 +71,7 @@ int main(int argc, char** argv) {
 				driver->dsm_wait("Guess");
 			}
 		}
-		char* guess = *((char *)data.addr);
+		char* guess = *((char**)data.addr);
 		// Check if others have solved it
 		if (strcmp(guess, solution) == 0) {
 			cout << "Game has ended" << endl;
@@ -94,7 +79,7 @@ int main(int argc, char** argv) {
 		}
 		//Print the guess and the misses (missed character equals missed attempt, so 10 chars max)
 		cout << "Guess the phrase: " << guess << endl;
-		cout << "Misses:" << failedchars.c_str() << endl;
+		cout << "Misses:" << failedchars << endl;
 		//Read the input
 		//A char: a character to enter in the solution.
 		//A string: the solution itself
@@ -103,12 +88,12 @@ int main(int argc, char** argv) {
 		//We get the first guess to compare the changes. If the char doesn't exists, it's a failed attempt.
 		char* initialguess = guess;
 		if (input.length() == 1) {
-			for (int i = 0, i < solution.length(); i++) {
-				if (solution[i] == (char)input;
-					guess[i] = (char)input;
+			for (int i = 0; i < strlen(solution); i++) {
+				if (solution[i] == (char)input.c_str()[0])
+					guess[i] = (char)input.c_str()[0];
 			}
 			if (strcmp(initialguess, guess) != 0) {
-				failedchars[failedchars.length()] = (char)input;
+				failedchars[strlen(failedchars)] = (char)input.c_str()[0];
 				attempts--;
 				current++;
 			} else {
@@ -121,7 +106,7 @@ int main(int argc, char** argv) {
 				}
 			}
 		} else {
-			if (strcmp(input, solution) == 0) {
+			if (strcmp(input.c_str(), solution) == 0) {
 				cout << "Congratulations, you beat the game in " << current << " attempts." << endl;
 				break;
 			}
@@ -129,6 +114,25 @@ int main(int argc, char** argv) {
 				current++;
 				attempts--;
 			}
+		}
+
+		try {
+			driver->dsm_malloc("Turn", sizeof(turn));
+			//Save player number in shared memory for turn management
+			turn = argv[3][0] + 1;
+			if (turn == 3)
+				turn = 1;
+			try {
+				driver->dsm_put("Turn", (void *)&turn, sizeof(turn)); 
+			} catch (DsmException dsme) {
+				cerr << "ERROR: dsm_put(\"Turn\", &turn, " << sizeof(turn) << ")): " << dsme << endl;
+				driver->dsm_free("Turn");
+				exit(1);
+			}
+		} catch (DsmException dsme) {
+			// There may be several processes doing a dsm_malloc, only the first one will succeed 
+			cerr << "ERROR in dsm_malloc(\"Turn\", sizeof(" << sizeof(turn) << ")): " << dsme << endl;
+			exit(1);
 		}
 	}
 
