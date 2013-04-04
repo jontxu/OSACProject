@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 	gettimeofday (&first, &tzp);
 	signal(SIGINT, freememory(run));
 	// Initialize an array with 100 integers and publish it in DSM under name "Array100Nums"
-	while ((second.tv_sec - first.tv_sec) == 1 && run) {
+	do {
 		try {
 			first.tv_sec = second.tv_sec;
 			first.tv_usec = second.tv_usec;
@@ -59,6 +59,6 @@ int main(int argc, char** argv) {
 			cerr << "ERROR in dsm_malloc(\"GLOBAL_TIMESTAMP\", sizeof(" << sizeof(first) << ")): " << dsme << endl;
 			exit(1);
 		}
-	}
+	} while ((second.tv_sec - first.tv_sec) == 1 && run);
 }
 

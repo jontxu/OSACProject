@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
 	gettimeofday (&first, &tzp);
 	signal(SIGINT, finalize(run));
 	// Get the global timestamp variable every second
-	while ((second.tv_sec - first.tv_sec) == 1 && run) {
+	do {
 		try {
 			first.tv_sec = second.tv_sec;
 			first.tv_usec = second.tv_usec;
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 			cerr << "ERROR: dsm_get(\"GLOBAL_TIMESTAMP\") - Waiting for other process to initialise it: " << dsme << endl;
 			driver->dsm_wait("GLOBAL_TIMESTAMP");
 		}
-	} 
+	} while ((second.tv_sec - first.tv_sec) == 1 && run);
 	
 	/*
 	timestamp = *(timeval)data.addr);
