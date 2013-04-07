@@ -1,16 +1,16 @@
 # Makefile
 # author: dipina@eside.deusto.es
-CC=g++ -fPIC -Wall
+CC=g++ -fPIC
 LDFLAGS=-L../util -lm -lpthread -lesidesocket -lesidethread -lesidesqlite
 INCLUDE=-I../util
 
-main: EchoTcpListener EchoTcpClient NameServer NameClient
+main: EncryptTcpListener EncryptTcpClient NameServer NameClient EncryptClient
 
-EchoTcpListener: EchoServerThread.o EchoTcpListener.o
-	$(CC) EchoServerThread.o EchoTcpListener.o $(LDFLAGS) -o EchoTcpListener
+EncryptTcpListener: EncryptServerThread.o EncryptTcpListener.o
+	$(CC) EncryptServerThread.o EncryptTcpListener.o $(LDFLAGS) -o EncryptTcpListener
 
-EchoTcpClient: EchoTcpClient.o
-	$(CC) EchoTcpClient.o $(LDFLAGS) -o EchoTcpClient
+EncryptTcpClient: EncryptTcpClient.o
+	$(CC) EncryptTcpClient.o $(LDFLAGS) -o EncryptTcpClient
 
 NameServer: NameServer.o
 	$(CC) NameServer.o $(LDFLAGS) -o NameServer
@@ -18,14 +18,14 @@ NameServer: NameServer.o
 NameClient: NameClient.o
 	$(CC) NameClient.o $(LDFLAGS) -o NameClient
 
-EchoServerThread.o: EchoServerThread.cc EchoServerThread.h
-	$(CC) $(INCLUDE) -c EchoServerThread.cc
+EncryptServerThread.o: EncryptServerThread.cc EncryptServerThread.h
+	$(CC) $(INCLUDE) -c EncryptServerThread.cc
 
-EchoTcpListener.o: EchoTcpListener.cc
-	$(CC) $(INCLUDE) -c EchoTcpListener.cc
+EncryptTcpListener.o: EncryptTcpListener.cc
+	$(CC) $(INCLUDE) -c EncryptTcpListener.cc
 
-EchoTcpClient.o: EchoTcpClient.cc
-	$(CC) $(INCLUDE) -c EchoTcpClient.cc
+EncryptTcpClient.o: EncryptTcpClient.cc
+	$(CC) $(INCLUDE) -c EncryptTcpClient.cc
 
 NameServer.o: NameServer.cc NameServer.h
 	$(CC) $(INCLUDE) -c NameServer.cc
@@ -33,7 +33,9 @@ NameServer.o: NameServer.cc NameServer.h
 NameClient.o: NameClient.cc 
 	$(CC) $(INCLUDE) -c NameClient.cc
 
+
+
 clean:
 	rm *.o
-	rm EchoTcpListener EchoTcpClient NameServer NameClient
+	rm EncryptTcpListener EncryptTcpClient NameServer NameClient EncryptClient
 	rm *.exe

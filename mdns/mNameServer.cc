@@ -157,7 +157,8 @@ namespace PracticaCaso {
 		while (this->keepRunning) {
 			addrlen=sizeof(addr);
 			// Read one multicast UDP packet.
-			if ((nbytes=recvfrom(fd4Receiving,msgbuf,MSGBUFSIZE,0, (struct sockaddr *)&addr, (socklen_t*)&addrlen)) < 0) {
+			if ((nbytes=recvfrom(fd4Receiving,msgbuf,MSGBUFSIZE,0, (struct sockaddr *)&addr,
+																						 (socklen_t*)&addrlen)) < 0) {
 			   cerr << "recvfrom" << endl;
 			   exit(1);
 			}
@@ -182,34 +183,19 @@ namespace PracticaCaso {
 
 	void mNameServer::mdns_management(string cmd, string payload, string code) {
 		map<string, string>::iterator p;
+		string dnsValue;
 		// Begin management utility function.
-		if (cmd == "MDNS_RESPONSE")
-			this->manage_response(cmd, payload, code);
-		else if (cmd == "MDNS_REQUEST")
-			this->manage_request(cmd, payload, code);
+
 	}
 
 	void mNameServer::mdns_manage_response(string cmd, string payload, string code) {
-		// Check if there is any pending query.
-		// The arrived MDNS_RESPONSE may be addressed to me.
-		// And then check if the MDNS_RESPONSE corresponds to pendingQuery. Use random code.
-		// satisfiedQuery establishes a default FIRST-FIT criterion. Other methods are welcome. */
-		cout << "mdns_management: MDNS_RESPONSE received" << endl;
-		if (!strcmp(this->satisfiedQuery.str(), cmd.str()) && !(this->satisfiedQuery) {
-			// Yes, there was a MDNS_RESPONSE, but not for me. This MDNS_RESPONSE can flow, or it  can crash... be the mdns_response, my friend. 
-			// It they don't come to me, snoopy cache can be implemented for efficiency.
-			// Query cache
-			this->dns2IpPortMap[pendingQuery] = payload;
-			this->sqliteMap.set(pendingQuery, payload);
-			
-			// If they come to me, combination methods can be accomplished for completion.
-			// It they don't come to me, snoopy cache can be implemented for efficiency. 
-			this->payload = payload;
-			this->pendingQueryCode = "";
-			this->satisfiedQuery = true;
-		} else {
-			
-		}
+	cout << "mdns_management: MDNS_RESPONSE received" << endl;
+
+	// Check if there is any pending query.
+	// The arrived MDNS_RESPONSE may be addressed to me.
+	// And then check if the MDNS_RESPONSE corresponds to pendingQuery. Use random code.
+	// satisfiedQuery establishes a default FIRST-FIT criterion. Other methods are welcome. */
+	// Yes, there was a MDNS_RESPONSE, but not for me. This MDNS_RESPONSE can flow, or it  can crash... be the mdns_response, my friend. 
 	// It they don't come to me, snoopy cache can be implemented for efficiency. 
 	// Warning! Man-in-the-middle poisoning attacks enabling.
 	// Query cache
@@ -218,26 +204,20 @@ namespace PracticaCaso {
 	// It they don't come to me, snoopy cache can be implemented for efficiency. 
 	// Warning! Man-in-the-middle poisoning attacks enabling.
 	// Query cache
+
 	}
 			
 	void mNameServer::mdns_manage_request(string cmd, string payload, string code) {
+	map<string, string>::iterator p;
+	string dnsValue;
+
 	// One MDNS_REQUEST received: you must lookup your table and answer or not.
 	// Lookup the local table. RFC doesn't recommend recursive looking up.
 	// If the requested dnsName is in the local table, response. If don't, not to.
 	// Send the good MDNS_RESPONSE.
-		map<string, string>::iterator p;
-		string dnsValue;
-		p = this->dns2IpPortMap(payload);	
-		if (p != this->dns2IpPortMap.end()) {	
-			ostringtream query;
-			query << MDNS_RESPONSE << p.second << code;
-			cout << "#MDNS_RESPONSE received: " << query.str() << endl;
-			this->queryWrapper.send(query.str());
-			
-		} else {
-		// If the requested dnsName is not in the local table, don't do anything.
-		// It can be interesting to use a MDNS_ERROR RESPONSE, but with some overhead.
-		}
+	// If the requested dnsName is not in the local table, don't do anything.
+	// It can be interesting to use a MDNS_ERROR RESPONSE, but with some overhead.	
+
 	}
 
 	string mNameServer::delegatemDNSCommunity(string dnsName) {

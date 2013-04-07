@@ -33,34 +33,46 @@ int main(int argc, char** argv) {
 	PracticaCaso::DsmData data;
 	cout << "Getting time from server: " << driver->get_nid() << endl;
 
-	struct timeval first, second; //or global_timestamp
+	struct timeval first, second, lapsed, current; //or global_timestamp
 	time_t curtime;
 	struct timezone tzp;
+	char buffer[100];
+	bool timeset = true;
 	gettimeofday (&first, &tzp);
 	signal(SIGINT, freememory);
-	// Initialize an array with 100 integers and publish it in DSM under name "Array100Nums"
+	try {
+		curtime = first.tv_sec;
+		cout << "I arrived to 2" << endl;
+		driver->dsm_malloc("GLOBAL_TIMESTAMP", sizeof(curtime));
+	} catch (DsmException dsme) {
+		// There may be several processes doing a dsm_malloc, only the first one will succeed 
+		cerr << "ERROR in dsm_malloc(\"GLOBAL_TIMESTAMP\", sizeof(" << sizeof(curtime) << ")): " << dsme << endl;
+		exit(1);
+	}
 	while(1) {
-		try {
-			curtime = first.tv_sec;
-			driver->dsm_malloc("GLOBAL_TIMESTAMP", sizeof(curtime));
-			try {
-				driver->dsm_put("GLOBAL_TIMESTAMP", (void *)curtime, sizeof(curtime));
+		gettimeofday(&second, &tzp);
+		if (first.tv_usec > second.tv_usec) {
+			second.tv_usec += 1000000;
+        	second.tv_sec--;
+		}
 
+		lapsed.tv_sec = second.tv_sec - first.tv_sec;
+
+		if (lapsed.tv_sec > 0) {
+			gettimeofday (&first, &tzp);
+			second.tv_usec += 1000000;
+        	second.tv_sec--;
+
+			try {
+				gettimeofday(&current, &tzp);
+				curtime = current.tv_sec;
+				strftime(buffer,100,"%d-%m-%Y, %H:%M:%S",localtime(&curtime));
+				driver->dsm_put("GLOBAL_TIMESTAMP", (void *)&curtime, sizeof(curtime));
 			} catch (DsmException dsme) {
 				cerr << "ERROR: dsm_put(\"GLOBAL_TIMESTAMP\", curtime, " << sizeof(curtime) << ")): " << dsme << endl;
 				driver->dsm_free("GLOBAL_TIMESTAMP");
 				exit(1);
 			}
-		} catch (DsmException dsme) {
-			// There may be several processes doing a dsm_malloc, only the first one will succeed 
-			cerr << "ERROR in dsm_malloc(\"GLOBAL_TIMESTAMP\", sizeof(" << sizeof(curtime) << ")): " << dsme << endl;
-			exit(1);
 		}
-		do {
-			gettimeofday(&second, &tzp);
-		} while (second.tv_usec - first.tv_usec != 1000000)
-		first.tv_sec = second.tv_sec;
-		first.tv_usec = second.tv_usec;
 	}
 }
-
