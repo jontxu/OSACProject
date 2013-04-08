@@ -9,7 +9,7 @@ git clone git@github.com:jontxu/OSACProject.git
 ```
 
 ##Setting up
-In order to use the dsm services you have to build the source files in the given order. For the dns services only `util` and `dns` are required
+In order to use the dsm services you have to build the source files in the given order. For the dns services only `util` and `dns` are required, but making all the parts is acknowledged:
 ```bash
 cd OSACProject
 cd util
@@ -20,6 +20,29 @@ cd ../mdns
 make
 cd ../dsm
 make
+```
+
+If you want to clean, use `make clean` in the respective folder.
+
+##Executing cryptography services
+```bash
+cd mdns
+./mNameServer 4444 es
+```
+
+```bash
+cd dns
+./NameServer 1234 deusto.es false
+```
+
+```bash
+cd dns
+./EncryptTcpListener 1337
+```
+
+```bash
+cd dns
+ ./EncryptTcpClient 4444 encrypt.deusto.es <filename>.txt
 ```
 
 ##Executing time services
@@ -40,9 +63,6 @@ cd dsm
 cd dsm
 ./DsmTimeClient 127.0.0.1 1234 dsm.deusto.es
 ```
-
-##Executing proposal #1
-To-do
 
 ##Executing the hangman game
 This game is intended for three people, so 6 terminals needed:

@@ -4,7 +4,7 @@ CC=g++ -fPIC
 LDFLAGS=-L../util -lm -lpthread -lesidesocket -lesidethread -lesidesqlite
 INCLUDE=-I../util
 
-main: EncryptTcpListener EncryptTcpClient NameServer NameClient EncryptClient
+main: EncryptTcpListener EncryptTcpClient NameServer NameClient
 
 EncryptTcpListener: EncryptServerThread.o EncryptTcpListener.o
 	$(CC) EncryptServerThread.o EncryptTcpListener.o $(LDFLAGS) -o EncryptTcpListener
@@ -37,5 +37,5 @@ NameClient.o: NameClient.cc
 
 clean:
 	rm *.o
-	rm EncryptTcpListener EncryptTcpClient NameServer NameClient EncryptClient
+	rm EncryptTcpListener EncryptTcpClient NameServer NameClient
 	rm *.exe

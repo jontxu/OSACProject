@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
   string fileName = argv[3];
   ifstream myFile;
   ofstream newFile;
+  ofstream newDFile;
   myFile.open(fileName.c_str());
   if(myFile.is_open()){
     cout << "File open successful" << endl;
@@ -65,19 +66,19 @@ int main(int argc, char** argv) {
 	  cout << endl;
 	  client->send("0."+key+":"+text);
 	  text = client->receive();	  
-	  newFile.open(("Encrypted"+fileName).c_str());
+	  newFile.open(("E"+fileName).c_str());
 	  newFile << text;
 	  newFile.close();
-	  cout << "Encrypted file created with name: Encrypted"+fileName << endl;
+	  cout << "Encrypted file created with name: E"+fileName << endl;
 	  break;
 	case 2:
 	  cout << "Your key is: 3" << endl;
 	  client->send("0.3:"+text);
 	  text = client->receive();
-	  newFile.open(("Encrypted"+fileName).c_str());
+	  newFile.open(("E"+fileName).c_str());
 	  newFile << text;
 	  newFile.close();
-	  cout << "Encrypted file created with name: Encrypted"+fileName << endl;
+	  cout << "Encrypted file created with name: E"+fileName << endl;
 	  break;
 	case 3:
 	  cout << "Decrypting key: ";
@@ -85,10 +86,12 @@ int main(int argc, char** argv) {
 	  cout << endl;
 	  client->send("1."+key+":"+text);
 	  text = client->receive();
-	  newFile.open(("Decrypted"+fileName).c_str());
-	  newFile << text;
-	  newFile.close();
-	  cout << "Decrypted file created with name: Decrypted"+fileName << endl;
+	  int size = strlen(text.c_str());
+	  text = text.substr(0,size-1);
+	  newDFile.open(("D"+fileName).c_str());
+	  newDFile << text;
+	  newDFile.close();
+	  cout << "Decrypted file created with name: D"+fileName << endl;
 	  break;
       }
 	

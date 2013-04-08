@@ -86,7 +86,7 @@ namespace PracticaCaso {
 			sql = "Insert into KeyValuePair values ('" + mapKey + "','" + mapValue + "')";
 		}
 		sqlite3_prepare(dbh, sql.c_str(), sql.size(), &stmt, NULL);
-		if (sqlite3_step(stmt) != SQLITE_OK) {
+		if (sqlite3_step(stmt) != SQLITE_DONE) {
 			cerr << "Can't insert or update database";
 			sqlite3_close(dbh);
 			exit(1);
@@ -163,4 +163,3 @@ int main(int argc, char** argv) {
 	delete SQLiteMap_pointer;
 }
 */
-
