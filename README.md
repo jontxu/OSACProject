@@ -9,7 +9,7 @@ git clone git@github.com:jontxu/OSACProject.git
 ```
 
 ##Setting up
-In order to use the dsm services you have to build the source files in the given order. For the dns services only `util` and `dns` are required, but making all the parts is acknowledged:
+In order to use the dsm services you have to build the source files in the given order. For the dns services only `util` and `dns` are required, but making all the parts is encouraged:
 ```bash
 cd OSACProject
 cd util
